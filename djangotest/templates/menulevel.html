@@ -1,0 +1,6 @@
+<ul>
+    <li><a href="/show/{{level.id}}">{{ level.name }}</a>
+        {% for child in level.children %}
+            {% include "menulevel.html" with level=child %}
+        {% endfor %}
+</ul>

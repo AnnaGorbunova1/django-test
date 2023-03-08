@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Меню</title>
+    <meta charset="utf-8" />
+</head>
+<body>
+    <ul>
+        {% for mm in main_menu %}
+        <li>
+            <a href="show/{{mm.id}}">{{mm.name}}</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
