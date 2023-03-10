@@ -6,9 +6,9 @@
 </head>
 <body>
     <ul>
-        {% for mm in main_menu %}
+        {% for menu_item in main_menu %}
         <li>
-            <a href="show/{{mm.id}}">{{mm.name}}</a>
+            <a href="show/{{menu_item.id}}">{{menu_item.name}}</a>
         </li>
         {% endfor %}
     </ul>
