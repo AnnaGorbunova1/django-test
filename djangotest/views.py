@@ -6,7 +6,6 @@ from .models import *
 
 
 def index(request):
-
     # получаем список элементов меню, у которых нет родителя
     # значит это наши названия меню
     root_menu_items = Item.objects.filter(parent_id__isnull=True)
@@ -21,44 +20,28 @@ def index(request):
 
 
 def show(request, id):
-
     # дерево предков
+    item_parents = ItemsTree.objects.filter(child=id).order_by('-depth')
     # и ближайшие потомки
-    items_list = Item.objects.raw(
-        'SELECT items.id id, itemparent.name as show_name, tree.parent_id parent_id, tree.depth depth, 1 as is_parent\
-        FROM djangotest_item items\
-        JOIN djangotest_itemstree tree\
-        ON items.id=tree.child_id \
-        JOIN djangotest_item itemparent\
-        ON itemparent.id = tree.parent_id\
-        WHERE items.id=%s\
-        UNION\
-        SELECT items.id id, items.name as show_name, items.parent_id parent_id, 1 depth, 0 as is_parent\
-        FROM djangotest_item items\
-        WHERE items.parent_id=%s\
-        ORDER by is_parent DESC, depth DESC',
-        [id, id]
-    )
+    item_children = Item.objects.filter(parent=id)
 
     # строим дерево меню
-    def get_menu_tree(lst):
-        level = {'name': lst[0].show_name, 'id': lst[0].parent_id}
-        if len(lst) > 1:
-            if lst[1].is_parent:
-                level['children'] = []
-                level['children'].append(get_menu_tree(lst[1:]))
-            else:
-                level['children'] = []
-                for ls in lst[1:]:
-                    level['children'].append({'name': ls.show_name, 'id': ls.id, 'children': {}})
-
+    def get_menu_tree_query(parents, children):
+        level = {'name': parents[0].parent, 'id': parents[0].parent.id}
+        # идем по родителям
+        if len(parents) > 1:
+            level['children'] = []
+            level['children'].append(get_menu_tree_query(parents[1:], children))
+        # добавляем список детей
         else:
-            level['children'] = {}
+            level['children'] = []
+            for ch in children:
+                level['children'].append({'name': ch.name, 'id': ch.id, 'children': {}})
 
         return level
 
-    menu = get_menu_tree(items_list)
+    menu = get_menu_tree_query(item_parents, item_children) if len(item_parents) > 0 else []
     name = Item.objects.get(id=id)
 
     data = {'menu': menu, 'name': name}
-    return TemplateResponse(request,  "show.html", data)
+    return TemplateResponse(request, "show.html", data)
